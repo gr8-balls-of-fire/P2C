@@ -44,15 +44,22 @@ A single-user prospect-to-customer engine for Parimal's own SaaS ventures — pr
 - [x] State-colored badges in tables
 - [x] Navigation header (Home, Ventures links)
 
-**Phase 2 — Lead/Pipeline Management** (NEXT)
-- [ ] Database migration (npx prisma migrate dev --name init)
-- [ ] Task generation: daily task queue surface
-- [ ] Dormancy logic: 5 touches / 21 days → Dormant
-- [ ] Recycling: cooldown period (90 days) before retry
-- [ ] Prioritization rule: overdue first, then fit, then stage age
-- [ ] Prospect → Lead auto-transition (on first engagement)
-- [ ] Task model: channel, contact, action, due, status
-- [ ] Task queue UI page
+**Phase 2 ✅ COMPLETE** (commit: 7a435bd)
+- [x] Task model + VentureContact junction for dormancy tracking
+- [x] Service layer: PipelineService with full state machine + dormancy logic
+- [x] State transitions: Prospect→Lead (engage), Lead→Opportunity
+- [x] Dormancy rules: 5 touches / 21 days → Dormant, 90-day cooldown
+- [x] Task queue: daily tasks sorted by priority (overdue, fit, stage age)
+- [x] Touch logging: completing tasks logs touch + increments counter
+- [x] API endpoints: task CRUD, engage, advance, dormancy identify/mark, pipeline view
+- [x] UI pages: daily task queue, pipeline overview (funnel + metrics)
+- [x] Contact detail: Engage→Lead and Lead→Opportunity buttons
+
+**Phase 3 — Direct Outreach Task Queue (4a)** (NEXT)
+- [ ] Email sending integration (Resend API)
+- [ ] LinkedIn task queue UI + outcome logging
+- [ ] Task pacing/drip logic
+- [ ] Template selection UI
 
 ---
 
@@ -83,10 +90,10 @@ A single-user prospect-to-customer engine for Parimal's own SaaS ventures — pr
 ## 6. Build Order
 
 1. ✅ **Phase 0:** Scaffold
-2. **Phase 1:** Prospect DB + Identification
-3. **Phase 2:** Lead/Pipeline Management
-4. **Phase 3:** Direct Outreach Task Queue (4a)
-5. **Phase 4:** Post Queue Replenishment (4b)
-6. **Phase 5:** Response Tracking
-7. **Phase 6:** Deal Closing + Call Logging
-8. **Phase 7:** Reporting
+2. ✅ **Phase 1:** Prospect DB + Identification (+ bonus: Custom Campaign Stages)
+3. ✅ **Phase 2:** Lead/Pipeline Management (State machine, task queue, dormancy)
+4. **Phase 3:** Direct Outreach Task Queue (4a) — email + LinkedIn tasks
+5. **Phase 4:** Post Queue Replenishment (4b) — Buffer integration
+6. **Phase 5:** Response Tracking — reply detection + auto-transitions
+7. **Phase 6:** Deal Closing + Call Logging — Opp→Customer, call capture
+8. **Phase 7:** Reporting — pipeline views, funnel metrics
