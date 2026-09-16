@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Venture: Multi-venture identifier (not a full tenant, just a lookup)
+model Venture {
+  id        String   @id @default(cuid())
+  name      String
+  icpNotes  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contacts Contact[]
+}
+
+// Contact: Core entity (Contact/Company pairing)
+model Contact {
+  id                String   @id @default(cuid())
+  venture           Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId         String
+
+  // Contact info
+  firstName         String?
+  lastName          String?
+  email             String?
+  phone             String?
+  title             String?
+  company           String?
+  linkedinUrl       String?
+  source            String? // "manual", "csv", "api", etc.
+
+  // Enrichment fields
+  industry          String?
+  companySize       String?
+  notes             String?
+
+  // Lifecycle state
+  state             State    @default(PROSPECT)
+  prospectState     ProspectState? // Sub-state for Prospect
+
+  // Tracking
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastTouchedAt     DateTime?
+  nextActionDueAt   DateTime?
+
+  stateHistory      StateHistory[]
+  touches           Touch[]
+
+  @@index([ventureId])
+  @@index([state])
+  @@index([prospectState])
+  @@index([lastTouchedAt])
+  @@index([nextActionDueAt])
+}
+
+// StateHistory: Audit trail of all state transitions
+model StateHistory {
+  id          String   @id @default(cuid())
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String
+
+  fromState   State
+  toState     State
+  reason      String?  // Reason code or explanation
+
+  createdAt   DateTime @default(now())
+
+  @@index([contactId])
+  @@index([createdAt])
+}
+
+// Touch: Record of every outbound/inbound interaction
+model Touch {
+  id          String   @id @default(cuid())
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String
+
+  channel     Channel
+  action      String   // "email_sent", "connection_request", "dm_sent", "call_logged", etc.
+  status      String   // "pending", "sent", "delivered", "opened", "replied", "failed", "logged"
+
+  details     String?  // JSON or free text
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([contactId])
+  @@index([channel])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Enums
+enum State {
+  PROSPECT
+  LEAD
+  OPPORTUNITY
+  CUSTOMER
+  CLOSED_LOST
+  DORMANT
+}
+
+enum ProspectState {
+  NEW
+  ENRICHED
+  REQUALIFIED
+  DISQUALIFIED
+}
+
+enum Channel {
+  EMAIL
+  LINKEDIN_DIRECT
+  LINKEDIN_CONTENT
+  CALL
+  OTHER
+}
