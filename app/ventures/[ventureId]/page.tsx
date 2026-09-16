@@ -98,7 +98,7 @@ export default function VentureDetailPage() {
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 flex-wrap">
           <button
             onClick={() => setShowNewContact(true)}
             className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 dark:bg-slate-50 dark:text-slate-900 transition"
@@ -111,6 +111,18 @@ export default function VentureDetailPage() {
           >
             📥 Import CSV
           </button>
+          <Link
+            href={`/ventures/${ventureId}/tasks`}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block"
+          >
+            📋 Task Queue
+          </Link>
+          <Link
+            href={`/ventures/${ventureId}/pipeline`}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition inline-block"
+          >
+            📊 Pipeline
+          </Link>
         </div>
 
         {/* Filters */}

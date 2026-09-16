@@ -99,4 +99,48 @@ export const api = {
     listStages: (ventureId: string, campaignId: string) =>
       apiCall(`/ventures/${ventureId}/campaigns/${campaignId}/stages`),
   },
+  tasks: {
+    list: (ventureId: string, params?: Record<string, any>) => {
+      const query = new URLSearchParams(params).toString();
+      return apiCall(`/ventures/${ventureId}/tasks${query ? `?${query}` : ''}`);
+    },
+    create: (ventureId: string, data: any) =>
+      apiCall(`/ventures/${ventureId}/tasks`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    complete: (ventureId: string, taskId: string, notes?: string) =>
+      apiCall(`/ventures/${ventureId}/tasks/${taskId}/complete`, {
+        method: 'POST',
+        body: JSON.stringify({ notes }),
+      }),
+    skip: (ventureId: string, taskId: string, reason?: string) =>
+      apiCall(`/ventures/${ventureId}/tasks/${taskId}/skip`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+  },
+  pipeline: {
+    getView: (ventureId: string) =>
+      apiCall(`/ventures/${ventureId}/pipeline`),
+    engage: (ventureId: string, contactId: string, reason?: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/engage`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+    advanceToOpportunity: (ventureId: string, contactId: string, reason?: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/advance-to-opportunity`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+    identifyDormant: (ventureId: string) =>
+      apiCall(`/ventures/${ventureId}/dormancy/identify`, {
+        method: 'POST',
+      }),
+    markDormant: (ventureId: string, contactIds: string[]) =>
+      apiCall(`/ventures/${ventureId}/dormancy/mark`, {
+        method: 'POST',
+        body: JSON.stringify({ contactIds }),
+      }),
+  },
 };

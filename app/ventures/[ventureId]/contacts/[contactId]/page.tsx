@@ -88,6 +88,24 @@ export default function ContactDetailPage() {
     }
   };
 
+  const handleEngage = async () => {
+    try {
+      await api.pipeline.engage(ventureId, contactId, 'Manual engagement by user');
+      loadContact();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to engage contact');
+    }
+  };
+
+  const handleAdvanceToOpportunity = async () => {
+    try {
+      await api.pipeline.advanceToOpportunity(ventureId, contactId, 'Manual advancement by user');
+      loadContact();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to advance contact');
+    }
+  };
+
   const handleDisqualified = async () => {
     setShowDisqualify(false);
     loadContact();
@@ -344,11 +362,27 @@ export default function ContactDetailPage() {
 
               <div className="space-y-2 mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                 {contact.state === 'PROSPECT' && (
+                  <>
+                    <button
+                      onClick={handleRequalify}
+                      className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    >
+                      Requalify
+                    </button>
+                    <button
+                      onClick={handleEngage}
+                      className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    >
+                      Engage → Lead
+                    </button>
+                  </>
+                )}
+                {contact.state === 'LEAD' && (
                   <button
-                    onClick={handleRequalify}
-                    className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                    onClick={handleAdvanceToOpportunity}
+                    className="w-full px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
                   >
-                    Requalify
+                    Advance → Opportunity
                   </button>
                 )}
                 {(contact.state === 'PROSPECT' || contact.state === 'LEAD') && (

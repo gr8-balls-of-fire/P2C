@@ -18,8 +18,10 @@ model Venture {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  contacts Contact[]
-  campaigns Campaign[]
+  contacts        Contact[]
+  campaigns       Campaign[]
+  tasks           Task[]
+  ventureContacts VentureContact[]
 }
 
 // Campaign: Groups contacts and defines custom stages for a sales campaign
@@ -98,6 +100,8 @@ model Contact {
 
   stateHistory      StateHistory[]
   touches           Touch[]
+  tasks             Task[]
+  ventureContacts   VentureContact[]
 
   @@index([ventureId])
   @@index([campaignId])
@@ -146,6 +150,55 @@ model Touch {
   @@index([createdAt])
 }
 
+// Task: Daily task queue item (prospect enrichment, follow-ups, etc.)
+model Task {
+  id          String   @id @default(cuid())
+  venture     Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId   String
+  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String
+
+  channel     Channel?  // EMAIL, LINKEDIN_DIRECT, CALL, null for system tasks
+  action      String    // "enrich_prospect", "requalify", "send_email", "connect_linkedin", "follow_up_call", etc.
+  status      TaskStatus @default(PENDING)  // PENDING, COMPLETED, SKIPPED, FAILED
+
+  dueAt       DateTime
+  priority    Int @default(0)  // 0 = high, 100 = low (for sorting)
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ventureId])
+  @@index([contactId])
+  @@index([status])
+  @@index([dueAt])
+  @@index([priority])
+}
+
+// VentureContact junction to track dormancy/recycling per venture
+model VentureContact {
+  id              String   @id @default(cuid())
+  venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId       String
+  contact         Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId       String
+
+  touchCount      Int @default(0)  // Number of outbound touches in current cycle
+  lastTouchedAt   DateTime?
+  dormantAt       DateTime?  // When contact became dormant
+  recycleableAt   DateTime?  // When dormant contact can be recycled (dormantAt + 90 days)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([ventureId, contactId])
+  @@index([ventureId])
+  @@index([contactId])
+  @@index([dormantAt])
+  @@index([recycleableAt])
+}
+
 // Enums
 enum State {
   PROSPECT
@@ -169,4 +222,11 @@ enum Channel {
   LINKEDIN_CONTENT
   CALL
   OTHER
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  FAILED
 }
