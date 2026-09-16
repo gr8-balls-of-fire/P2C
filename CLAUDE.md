@@ -25,39 +25,45 @@ A single-user prospect-to-customer engine for Parimal's own SaaS ventures — pr
 
 ---
 
-## 3. Current Phase: Phase 1 — Prospect DB + Identification
+## 3. Phase Status
 
-**Phase 0 ✅ COMPLETE** — Scaffold initialized and pushed to GitHub (commit: 1c6a417)
+**Phase 0 ✅ COMPLETE** (commit: 1c6a417)
+- Next.js 14 + TypeScript + Prisma + PostgreSQL scaffold
+- Single-user API key middleware
+- GitHub repo initialized
 
-What Phase 0 delivered:
-- [x] Next.js 14 (App Router) + TypeScript + Tailwind
-- [x] Prisma initialized with core schema (Venture, Contact, StateHistory, Touch)
-- [x] PostgreSQL configured
-- [x] Single-user API key middleware + health check
-- [x] .env.local + .env.example templates
-- [x] Package scripts (db:migrate, db:studio, etc.)
-- [x] README with quick start guide
-- [x] GitHub repo initialized and first commit pushed
+**Phase 1 ✅ COMPLETE** (commit: fc9dc22)
+- [x] Service layer: ContactService with CRUD, CSV import, state transitions
+- [x] API endpoints: contacts CRUD, CSV import, requalify, disqualify
+- [x] UI pages: ventures list, venture detail, contact detail
+- [x] Modals: new contact, CSV import, disqualify
+- [x] Client API wrapper (type-safe)
+- [x] State history tracking for all transitions
+- [x] CSV import with duplicate detection & error reporting
+- [x] Contact enrichment form (title, company, LinkedIn, industry, notes)
+- [x] State-colored badges in tables
+- [x] Navigation header (Home, Ventures links)
 
-**Phase 1 — Prospect DB + Identification** (NEXT)
+**Phase 2 — Lead/Pipeline Management** (NEXT)
 - [ ] Database migration (npx prisma migrate dev --name init)
-- [ ] CRUD endpoints: POST/GET /api/contacts (create, list, get)
-- [ ] CSV import endpoint: POST /api/contacts/import
-- [ ] Manual contact entry form (Prospect creation UI)
-- [ ] Contact enrichment UI (fill in title, company, LinkedIn URL, etc.)
-- [ ] State transition endpoints (mark Enriched, Requalified, or Disqualified)
-- [ ] Contact detail page with state history
-- [ ] Venture selector/switcher in UI
+- [ ] Task generation: daily task queue surface
+- [ ] Dormancy logic: 5 touches / 21 days → Dormant
+- [ ] Recycling: cooldown period (90 days) before retry
+- [ ] Prioritization rule: overdue first, then fit, then stage age
+- [ ] Prospect → Lead auto-transition (on first engagement)
+- [ ] Task model: channel, contact, action, due, status
+- [ ] Task queue UI page
 
 ---
 
-## 4. Decisions Made in Phase 0
+## 4. Architecture Decisions (Locked)
 
-- **Hosting:** Vercel + Railway PostgreSQL (decided)
-- **Email:** Resend (free tier, 100 emails/day — decided)
-- **Access Gate:** API key from env var + email in .env.local (decided)
-- **Database:** Prisma PostgreSQL with migrations (decided)
-- **Schema:** Contact as core entity with Venture FK, StateHistory audit log, Touch ledger (decided)
+- **Hosting:** Vercel + Railway PostgreSQL
+- **Email:** Resend (free tier, 100 emails/day)
+- **Access Gate:** API key from env var (NEXT_PUBLIC_API_KEY)
+- **Database:** Prisma PostgreSQL with migrations
+- **Schema:** Contact as core entity, StateHistory audit, Touch ledger, Venture FK
+- **Service Layer:** BusinessLogic in lib/service, routes thin
 
 ---
 
