@@ -143,4 +143,23 @@ export const api = {
         body: JSON.stringify({ contactIds }),
       }),
   },
+  outreach: {
+    getTemplates: (ventureId: string) =>
+      apiCall(`/ventures/${ventureId}/outreach/templates`),
+    createTask: (ventureId: string, data: any) =>
+      apiCall(`/ventures/${ventureId}/outreach/create-task`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    generateSequence: (ventureId: string, contactId: string, options?: any) =>
+      apiCall(`/ventures/${ventureId}/outreach/generate-sequence`, {
+        method: 'POST',
+        body: JSON.stringify({ contactId, ...options }),
+      }),
+    logOutcome: (ventureId: string, data: any) =>
+      apiCall(`/ventures/${ventureId}/outreach/log`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+  },
 };
