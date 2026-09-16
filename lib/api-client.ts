@@ -60,6 +60,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ stageName }),
       }),
+    verifyEmail: (ventureId: string, contactId: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/verify-email`, {
+        method: 'POST',
+      }),
     import: async (ventureId: string, file: File) => {
       const formData = new FormData();
       formData.append('file', file);

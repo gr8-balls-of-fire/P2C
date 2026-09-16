@@ -120,6 +120,29 @@ export class ContactService {
     return contact;
   }
 
+  async verifyEmail(contactId: string): Promise<Contact> {
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId },
+    });
+
+    if (!contact) {
+      throw new Error('Contact not found');
+    }
+
+    if (!contact.email) {
+      throw new Error('Contact has no email address');
+    }
+
+    const updated = await prisma.contact.update({
+      where: { id: contactId },
+      data: {
+        emailVerifiedAt: new Date(),
+      },
+    });
+
+    return updated;
+  }
+
   async moveToCustomStage(
     contactId: string,
     stageName: string

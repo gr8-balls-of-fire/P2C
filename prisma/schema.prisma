@@ -82,6 +82,9 @@ model Contact {
   companySize       String?
   notes             String?
 
+  // Email validation
+  emailVerifiedAt   DateTime?  // When email was verified/validated
+
   // Lifecycle state
   state             State    @default(PROSPECT)
   customStage       String?  // If in campaign, the stage name; otherwise null
@@ -103,6 +106,7 @@ model Contact {
   @@index([prospectState])
   @@index([lastTouchedAt])
   @@index([nextActionDueAt])
+  @@index([emailVerifiedAt])
 }
 
 // StateHistory: Audit trail of all state transitions
