@@ -25,23 +25,39 @@ A single-user prospect-to-customer engine for Parimal's own SaaS ventures — pr
 
 ---
 
-## 3. Current Phase: Phase 0 — Scaffold (IN PROGRESS)
+## 3. Current Phase: Phase 1 — Prospect DB + Identification
 
-- [x] Next.js 14 + TypeScript + Prisma + Postgres scaffold initialized
-- [ ] Prisma schema: Venture, Contact, StateHistory tables
-- [ ] Single-user access gate via middleware
-- [ ] Environment variables configured (.env.local)
-- [ ] Deployment target wired (Vercel)
-- [ ] Initial git commit ready
+**Phase 0 ✅ COMPLETE** — Scaffold initialized and pushed to GitHub (commit: 1c6a417)
+
+What Phase 0 delivered:
+- [x] Next.js 14 (App Router) + TypeScript + Tailwind
+- [x] Prisma initialized with core schema (Venture, Contact, StateHistory, Touch)
+- [x] PostgreSQL configured
+- [x] Single-user API key middleware + health check
+- [x] .env.local + .env.example templates
+- [x] Package scripts (db:migrate, db:studio, etc.)
+- [x] README with quick start guide
+- [x] GitHub repo initialized and first commit pushed
+
+**Phase 1 — Prospect DB + Identification** (NEXT)
+- [ ] Database migration (npx prisma migrate dev --name init)
+- [ ] CRUD endpoints: POST/GET /api/contacts (create, list, get)
+- [ ] CSV import endpoint: POST /api/contacts/import
+- [ ] Manual contact entry form (Prospect creation UI)
+- [ ] Contact enrichment UI (fill in title, company, LinkedIn URL, etc.)
+- [ ] State transition endpoints (mark Enriched, Requalified, or Disqualified)
+- [ ] Contact detail page with state history
+- [ ] Venture selector/switcher in UI
 
 ---
 
-## 4. Open Decisions (Phase 0 Blockers)
+## 4. Decisions Made in Phase 0
 
-None — proceeding with:
-- **Hosting:** Vercel + Railway PostgreSQL
-- **Email:** Resend (free tier, 100 emails/day)
-- **Access Gate:** API key from env var (pm@heuristicworks.com hardcoded for v1)
+- **Hosting:** Vercel + Railway PostgreSQL (decided)
+- **Email:** Resend (free tier, 100 emails/day — decided)
+- **Access Gate:** API key from env var + email in .env.local (decided)
+- **Database:** Prisma PostgreSQL with migrations (decided)
+- **Schema:** Contact as core entity with Venture FK, StateHistory audit log, Touch ledger (decided)
 
 ---
 
