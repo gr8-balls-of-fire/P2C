@@ -1,0 +1,77 @@
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || 'dev-key-change-me';
+
+async function apiCall(
+  path: string,
+  options: RequestInit = {}
+) {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${API_KEY}`,
+    ...options.headers,
+  };
+
+  const response = await fetch(`/api${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(error.error || `API error: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export const api = {
+  ventures: {
+    list: () => apiCall('/ventures'),
+    create: (data: { name: string; icpNotes?: string }) =>
+      apiCall('/ventures', { method: 'POST', body: JSON.stringify(data) }),
+  },
+  contacts: {
+    list: (ventureId: string, params?: Record<string, any>) => {
+      const query = new URLSearchParams(params).toString();
+      return apiCall(`/ventures/${ventureId}/contacts${query ? `?${query}` : ''}`);
+    },
+    get: (ventureId: string, contactId: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}`),
+    create: (ventureId: string, data: any) =>
+      apiCall(`/ventures/${ventureId}/contacts`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    update: (ventureId: string, contactId: string, data: any) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+    requalify: (ventureId: string, contactId: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/requalify`, {
+        method: 'POST',
+      }),
+    disqualify: (ventureId: string, contactId: string, reason: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/disqualify`, {
+        method: 'POST',
+        body: JSON.stringify({ reason }),
+      }),
+    import: async (ventureId: string, file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(
+        `/api/ventures/${ventureId}/contacts/import`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: formData,
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Import failed');
+      }
+      return response.json();
+    },
+  },
+};
