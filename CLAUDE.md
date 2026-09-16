@@ -15,13 +15,18 @@ A single-user prospect-to-customer engine for Parimal's own SaaS ventures — pr
 ## 2. Locked Architecture Decisions
 
 - **Stack:** Next.js 14 (App Router) + TypeScript + Postgres via Prisma
+- **CRM Model:** Account-Contact-Opportunity (standard shape, 3 entities)
+  - Account: company (1 company : many people)
+  - Contact: person (1 person : many opportunities)
+  - Opportunity: sales process/deal (1 deal : many stakeholders)
 - **Single-user v1:** lightweight access gate (not full multi-tenant auth)
-- **Multi-venture from day one:** every record tagged with `venture` ID
-- **Service layer separated from routes:** business logic in lib/service
+- **Multi-venture:** ventures tag all opportunities
+- **Custom fields:** JSON on Account/Opportunity for venture-specific ICP
+- **Service layer:** business logic in lib/service (CRMService, PipelineService, OutreachService)
 - **Buffer integration:** free-tier API for Post Queue Replenishment (Module 4b)
 - **LinkedIn:** task-queue + manual tab-switch (CSP blocks iframe)
-- **Hosting target:** Vercel + Postgres (decided for Phase 0)
-- **Email provider:** Resend (decided for Phase 0)
+- **Hosting:** Vercel + Postgres
+- **Email provider:** Resend (with warmup guardrails)
 
 ---
 

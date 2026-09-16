@@ -18,24 +18,145 @@ model Venture {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  contacts        Contact[]
+  accounts        Account[]
+  opportunities   Opportunity[]
   campaigns       Campaign[]
   tasks           Task[]
   ventureContacts VentureContact[]
 }
 
-// Campaign: Groups contacts and defines custom stages for a sales campaign
+// Account: Company-level record
+model Account {
+  id              String   @id @default(cuid())
+  venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId       String
+
+  name            String   // Company name
+  industry        String?
+  companySize     String?
+  website         String?
+  linkedinUrl     String?
+  notes           String?
+
+  // Venture-specific custom fields (ICP criteria)
+  customFields    Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contacts        Contact[]
+  opportunities   Opportunity[]
+
+  @@index([ventureId])
+}
+
+// Contact: Person at an Account
+model Contact {
+  id              String   @id @default(cuid())
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId       String
+
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String?
+  title           String?  // Job title
+  linkedinUrl     String?
+  source          String?  // "manual", "csv", "api"
+
+  // Email validation
+  emailVerifiedAt DateTime?
+
+  // Contact-specific custom fields (role, influence, etc.)
+  customFields    Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  opportunityContacts OpportunityContact[]
+  touches         Touch[]
+  tasks           Task[]
+
+  @@index([accountId])
+  @@index([email])
+  @@index([emailVerifiedAt])
+}
+
+// Opportunity: Sales process / Deal
+model Opportunity {
+  id              String   @id @default(cuid())
+  venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId       String
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  accountId       String
+  campaign        Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  campaignId      String?
+
+  name            String   // "Acme Inc - ArcAI License"
+  description     String?
+  amount          Float?   // Deal value
+
+  // Core lifecycle state machine
+  state           State    @default(PROSPECT)
+  prospectState   ProspectState?
+  customStage     String?  // If in campaign, the custom stage name
+
+  // Stakeholders involved in this opportunity
+  contacts        OpportunityContact[]
+
+  // Tracking
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastTouchedAt   DateTime?
+  nextActionDueAt DateTime?
+
+  // Deal-specific custom fields
+  customFields    Json?
+
+  stateHistory    StateHistory[]
+  touches         Touch[]
+  tasks           Task[]
+  ventureOpps     VentureContact[]
+
+  @@index([ventureId])
+  @@index([accountId])
+  @@index([campaignId])
+  @@index([state])
+  @@index([customStage])
+  @@index([prospectState])
+  @@index([lastTouchedAt])
+  @@index([nextActionDueAt])
+}
+
+// OpportunityContact: Many-to-many (Opportunity has many Contacts)
+model OpportunityContact {
+  id            String   @id @default(cuid())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId String
+  contact       Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId     String
+
+  // Role in this deal
+  role          String?  // "champion", "economic_buyer", "technical_eval"
+
+  createdAt     DateTime @default(now())
+
+  @@unique([opportunityId, contactId])
+  @@index([opportunityId])
+  @@index([contactId])
+}
+
+// Campaign: Groups opportunities and defines custom stages
 model Campaign {
   id        String   @id @default(cuid())
   venture   Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
   ventureId String
 
-  name      String   // e.g., "Q4 Enterprise Push", "Startup Outreach"
+  name      String
   description String?
 
-  // Custom stages for this campaign (replaces standard State enum)
   stages    CampaignStage[]
-  contacts  Contact[]
+  opportunities Opportunity[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -43,14 +164,14 @@ model Campaign {
   @@index([ventureId])
 }
 
-// CampaignStage: Custom stage in a campaign's sales process
+// CampaignStage: Custom stage in a campaign
 model CampaignStage {
   id        String   @id @default(cuid())
   campaign  Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   campaignId String
 
-  name      String   // e.g., "Lead Qualified", "Demo Scheduled", "Proposal Sent"
-  order     Int      // Stage sequence (0, 1, 2, ...)
+  name      String
+  order     Int
 
   createdAt DateTime @default(now())
 
@@ -59,142 +180,94 @@ model CampaignStage {
   @@index([campaignId])
 }
 
-// Contact: Core entity (Contact/Company pairing)
-model Contact {
-  id                String   @id @default(cuid())
-  venture           Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
-  ventureId         String
-
-  // Campaign (optional — if set, uses campaign's custom stages)
-  campaign          Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
-  campaignId        String?
-
-  // Contact info
-  firstName         String?
-  lastName          String?
-  email             String?
-  phone             String?
-  title             String?
-  company           String?
-  linkedinUrl       String?
-  source            String? // "manual", "csv", "api", etc.
-
-  // Enrichment fields
-  industry          String?
-  companySize       String?
-  notes             String?
-
-  // Email validation
-  emailVerifiedAt   DateTime?  // When email was verified/validated
-
-  // Lifecycle state
-  state             State    @default(PROSPECT)
-  customStage       String?  // If in campaign, the stage name; otherwise null
-  prospectState     ProspectState? // Sub-state for Prospect (used only if state=PROSPECT)
-
-  // Tracking
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  lastTouchedAt     DateTime?
-  nextActionDueAt   DateTime?
-
-  stateHistory      StateHistory[]
-  touches           Touch[]
-  tasks             Task[]
-  ventureContacts   VentureContact[]
-
-  @@index([ventureId])
-  @@index([campaignId])
-  @@index([state])
-  @@index([customStage])
-  @@index([prospectState])
-  @@index([lastTouchedAt])
-  @@index([nextActionDueAt])
-  @@index([emailVerifiedAt])
-}
-
 // StateHistory: Audit trail of all state transitions
 model StateHistory {
   id          String   @id @default(cuid())
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId   String
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId String
 
   fromState   State
   toState     State
-  reason      String?  // Reason code or explanation
+  reason      String?
 
   createdAt   DateTime @default(now())
 
-  @@index([contactId])
+  @@index([opportunityId])
   @@index([createdAt])
 }
 
 // Touch: Record of every outbound/inbound interaction
 model Touch {
   id          String   @id @default(cuid())
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId   String
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String?
 
   channel     Channel
-  action      String   // "email_sent", "connection_request", "dm_sent", "call_logged", etc.
-  status      String   // "pending", "sent", "delivered", "opened", "replied", "failed", "logged"
+  action      String
+  status      String
 
-  details     String?  // JSON or free text
+  details     String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  @@index([opportunityId])
   @@index([contactId])
   @@index([channel])
   @@index([status])
   @@index([createdAt])
 }
 
-// Task: Daily task queue item (prospect enrichment, follow-ups, etc.)
+// Task: Daily task queue item
 model Task {
   id          String   @id @default(cuid())
   venture     Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
   ventureId   String
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId   String
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId String?
+  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String?
 
-  channel     Channel?  // EMAIL, LINKEDIN_DIRECT, CALL, null for system tasks
-  action      String    // "enrich_prospect", "requalify", "send_email", "connect_linkedin", "follow_up_call", etc.
-  status      TaskStatus @default(PENDING)  // PENDING, COMPLETED, SKIPPED, FAILED
+  channel     Channel?
+  action      String
+  status      TaskStatus @default(PENDING)
 
   dueAt       DateTime
-  priority    Int @default(0)  // 0 = high, 100 = low (for sorting)
+  priority    Int @default(0)
   notes       String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([ventureId])
+  @@index([opportunityId])
   @@index([contactId])
   @@index([status])
   @@index([dueAt])
   @@index([priority])
 }
 
-// VentureContact junction to track dormancy/recycling per venture
+// VentureContact: Dormancy tracking per venture
 model VentureContact {
   id              String   @id @default(cuid())
   venture         Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
   ventureId       String
-  contact         Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId       String
+  opportunity     Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  opportunityId   String
 
-  touchCount      Int @default(0)  // Number of outbound touches in current cycle
+  touchCount      Int @default(0)
   lastTouchedAt   DateTime?
-  dormantAt       DateTime?  // When contact became dormant
-  recycleableAt   DateTime?  // When dormant contact can be recycled (dormantAt + 90 days)
+  dormantAt       DateTime?
+  recycleableAt   DateTime?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  @@unique([ventureId, contactId])
+  @@unique([ventureId, opportunityId])
   @@index([ventureId])
-  @@index([contactId])
+  @@index([opportunityId])
   @@index([dormantAt])
   @@index([recycleableAt])
 }
