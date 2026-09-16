@@ -120,6 +120,55 @@ export class ContactService {
     return contact;
   }
 
+  async moveToCustomStage(
+    contactId: string,
+    stageName: string
+  ): Promise<Contact> {
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId },
+      include: { campaign: true },
+    });
+
+    if (!contact) {
+      throw new Error('Contact not found');
+    }
+
+    if (!contact.campaignId) {
+      throw new Error('Contact is not assigned to a campaign');
+    }
+
+    // Verify stage exists in campaign
+    const stage = await prisma.campaignStage.findFirst({
+      where: {
+        campaignId: contact.campaignId,
+        name: stageName,
+      },
+    });
+
+    if (!stage) {
+      throw new Error(`Stage "${stageName}" not found in campaign`);
+    }
+
+    const updated = await prisma.contact.update({
+      where: { id: contactId },
+      data: {
+        customStage: stageName,
+      },
+    });
+
+    // Log state history (use stage name as both from/to for custom stages)
+    await prisma.stateHistory.create({
+      data: {
+        contactId,
+        fromState: contact.state,
+        toState: contact.state,
+        reason: `Moved to campaign stage: ${stageName}`,
+      },
+    });
+
+    return updated;
+  }
+
   async requalifyContact(contactId: string): Promise<Contact> {
     const contact = await prisma.contact.findUnique({
       where: { id: contactId },

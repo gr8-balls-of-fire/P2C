@@ -19,6 +19,42 @@ model Venture {
   updatedAt DateTime @updatedAt
 
   contacts Contact[]
+  campaigns Campaign[]
+}
+
+// Campaign: Groups contacts and defines custom stages for a sales campaign
+model Campaign {
+  id        String   @id @default(cuid())
+  venture   Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
+  ventureId String
+
+  name      String   // e.g., "Q4 Enterprise Push", "Startup Outreach"
+  description String?
+
+  // Custom stages for this campaign (replaces standard State enum)
+  stages    CampaignStage[]
+  contacts  Contact[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ventureId])
+}
+
+// CampaignStage: Custom stage in a campaign's sales process
+model CampaignStage {
+  id        String   @id @default(cuid())
+  campaign  Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaignId String
+
+  name      String   // e.g., "Lead Qualified", "Demo Scheduled", "Proposal Sent"
+  order     Int      // Stage sequence (0, 1, 2, ...)
+
+  createdAt DateTime @default(now())
+
+  @@unique([campaignId, name])
+  @@unique([campaignId, order])
+  @@index([campaignId])
 }
 
 // Contact: Core entity (Contact/Company pairing)
@@ -26,6 +62,10 @@ model Contact {
   id                String   @id @default(cuid())
   venture           Venture  @relation(fields: [ventureId], references: [id], onDelete: Cascade)
   ventureId         String
+
+  // Campaign (optional — if set, uses campaign's custom stages)
+  campaign          Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  campaignId        String?
 
   // Contact info
   firstName         String?
@@ -44,7 +84,8 @@ model Contact {
 
   // Lifecycle state
   state             State    @default(PROSPECT)
-  prospectState     ProspectState? // Sub-state for Prospect
+  customStage       String?  // If in campaign, the stage name; otherwise null
+  prospectState     ProspectState? // Sub-state for Prospect (used only if state=PROSPECT)
 
   // Tracking
   createdAt         DateTime @default(now())
@@ -56,7 +97,9 @@ model Contact {
   touches           Touch[]
 
   @@index([ventureId])
+  @@index([campaignId])
   @@index([state])
+  @@index([customStage])
   @@index([prospectState])
   @@index([lastTouchedAt])
   @@index([nextActionDueAt])

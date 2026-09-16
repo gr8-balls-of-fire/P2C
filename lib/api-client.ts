@@ -55,6 +55,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ reason }),
       }),
+    moveToStage: (ventureId: string, contactId: string, stageName: string) =>
+      apiCall(`/ventures/${ventureId}/contacts/${contactId}/move-to-stage`, {
+        method: 'POST',
+        body: JSON.stringify({ stageName }),
+      }),
     import: async (ventureId: string, file: File) => {
       const formData = new FormData();
       formData.append('file', file);
@@ -73,5 +78,21 @@ export const api = {
       }
       return response.json();
     },
+  },
+  campaigns: {
+    list: (ventureId: string) =>
+      apiCall(`/ventures/${ventureId}/campaigns`),
+    create: (ventureId: string, data: { name: string; description?: string; stages?: string[] }) =>
+      apiCall(`/ventures/${ventureId}/campaigns`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    addStage: (ventureId: string, campaignId: string, data: { name: string; order?: number }) =>
+      apiCall(`/ventures/${ventureId}/campaigns/${campaignId}/stages`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    listStages: (ventureId: string, campaignId: string) =>
+      apiCall(`/ventures/${ventureId}/campaigns/${campaignId}/stages`),
   },
 };
